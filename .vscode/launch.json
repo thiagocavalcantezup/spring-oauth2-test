@@ -1,0 +1,14 @@
+{
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Spring Boot-SpringOauth2TestApplication<spring-oauth2-test>",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "mainClass": "br.com.handora.springoauth2test.SpringOauth2TestApplication",
+      "projectName": "spring-oauth2-test",
+      "args": "",
+      "envFile": "${workspaceFolder}/.env"
+    }
+  ]
+}
