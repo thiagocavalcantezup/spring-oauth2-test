@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 
 import br.com.handora.springoauth2test.models.Contato;
 
@@ -19,6 +20,7 @@ public class ContatoRequest {
     @NotBlank
     private String criadoPor;
 
+    @NotEmpty
     @Valid
     private List<TelefoneRequest> telefones;
 
