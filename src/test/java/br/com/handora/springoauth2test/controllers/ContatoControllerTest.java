@@ -291,8 +291,39 @@ public class ContatoControllerTest {
         String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
 
         ContatoRequest contatoRequest = new ContatoRequest(
-            "Jordi", "Zup", "thiago.cavalcante",
-            List.of(new TelefoneRequest("celular", "+5511999998888"))
+            "Jordi", "Zup", List.of(new TelefoneRequest("celular", "+5511999998888"))
+        );
+
+        String requestPayload = objectMapper.writeValueAsString(contatoRequest);
+
+        MockHttpServletRequestBuilder requestBuilder = post(
+            ContatoController.BASE_URI
+        ).contentType(APPLICATION_JSON)
+         .content(requestPayload)
+         .with(
+             jwt().jwt(jwt -> jwt.claim("preferred_username", "thiago.cavalcante"))
+                  .authorities(new SimpleGrantedAuthority("SCOPE_contatos:write"))
+         );
+
+        // when
+        mockMvc.perform(requestBuilder)
+               .andExpect(status().isCreated()) // then
+               .andExpect(redirectedUrlPattern(baseUrl + ContatoController.BASE_URI + "/*")); // then
+
+        // then
+        List<Contato> contatos = contatoRepository.findAll();
+
+        assertEquals(1, contatos.size());
+        assertEquals("thiago.cavalcante", contatoRepository.findAll().get(0).getCriadoPor());
+    }
+
+    @Test
+    void deveCadastrarUmContatoComUsuarioAnonimo() throws Exception {
+        // given
+        String baseUrl = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+
+        ContatoRequest contatoRequest = new ContatoRequest(
+            "Jordi", "Zup", List.of(new TelefoneRequest("celular", "+5511999998888"))
         );
 
         String requestPayload = objectMapper.writeValueAsString(contatoRequest);
@@ -312,12 +343,13 @@ public class ContatoControllerTest {
         List<Contato> contatos = contatoRepository.findAll();
 
         assertEquals(1, contatos.size());
+        assertEquals("anonymous", contatoRepository.findAll().get(0).getCriadoPor());
     }
 
     @Test
     void naoDeveCadastrarUmContatoComDadosNulos() throws Exception {
         // given
-        ContatoRequest contatoRequest = new ContatoRequest(null, null, null, null);
+        ContatoRequest contatoRequest = new ContatoRequest(null, null, null);
 
         String requestPayload = objectMapper.writeValueAsString(contatoRequest);
 
@@ -326,7 +358,10 @@ public class ContatoControllerTest {
         ).contentType(APPLICATION_JSON)
          .content(requestPayload)
          .header("Accept-Language", "pt-br")
-         .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_contatos:write")));
+         .with(
+             jwt().jwt(jwt -> jwt.claim("preferred_username", "thiago.cavalcante"))
+                  .authorities(new SimpleGrantedAuthority("SCOPE_contatos:write"))
+         );
 
         // when
         String response = mockMvc.perform(requestBuilder)
@@ -339,11 +374,10 @@ public class ContatoControllerTest {
         List<String> mensagens = errorResponse.getMensagens();
 
         // then
-        assertThat(mensagens).hasSize(4)
+        assertThat(mensagens).hasSize(3)
                              .contains(
                                  "nome: não deve estar em branco",
                                  "empresa: não deve estar em branco",
-                                 "criadoPor: não deve estar em branco",
                                  "telefones: não deve estar vazio"
                              );
     }
@@ -352,7 +386,7 @@ public class ContatoControllerTest {
     void naoDeveCadastrarUmContatoComTelefoneComDadosNulos() throws Exception {
         // given
         ContatoRequest contatoRequest = new ContatoRequest(
-            "Jordi", "Zup", "thiago.cavalcante", List.of(new TelefoneRequest(null, null))
+            "Jordi", "Zup", List.of(new TelefoneRequest(null, null))
         );
 
         String requestPayload = objectMapper.writeValueAsString(contatoRequest);
@@ -362,7 +396,10 @@ public class ContatoControllerTest {
         ).contentType(APPLICATION_JSON)
          .content(requestPayload)
          .header("Accept-Language", "pt-br")
-         .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_contatos:write")));
+         .with(
+             jwt().jwt(jwt -> jwt.claim("preferred_username", "thiago.cavalcante"))
+                  .authorities(new SimpleGrantedAuthority("SCOPE_contatos:write"))
+         );
 
         // when
         String response = mockMvc.perform(requestBuilder)
@@ -386,8 +423,7 @@ public class ContatoControllerTest {
     void naoDeveCadastrarUmContatoSemToken() throws Exception {
         // given
         ContatoRequest contatoRequest = new ContatoRequest(
-            "Jordi", "Zup", "thiago.cavalcante",
-            List.of(new TelefoneRequest("celular", "+5511999998888"))
+            "Jordi", "Zup", List.of(new TelefoneRequest("celular", "+5511999998888"))
         );
 
         String requestPayload = objectMapper.writeValueAsString(contatoRequest);
@@ -404,15 +440,16 @@ public class ContatoControllerTest {
     void naoDeveCadastrarUmContatoSemScope() throws Exception {
         // given
         ContatoRequest contatoRequest = new ContatoRequest(
-            "Jordi", "Zup", "thiago.cavalcante",
-            List.of(new TelefoneRequest("celular", "+5511999998888"))
+            "Jordi", "Zup", List.of(new TelefoneRequest("celular", "+5511999998888"))
         );
 
         String requestPayload = objectMapper.writeValueAsString(contatoRequest);
 
-        MockHttpServletRequestBuilder requestBuilder = post(ContatoController.BASE_URI).contentType(
-            APPLICATION_JSON
-        ).content(requestPayload).with(jwt());
+        MockHttpServletRequestBuilder requestBuilder = post(
+            ContatoController.BASE_URI
+        ).contentType(APPLICATION_JSON)
+         .content(requestPayload)
+         .with(jwt().jwt(jwt -> jwt.claim("preferred_username", "thiago.cavalcante")));
 
         // when
         mockMvc.perform(requestBuilder).andExpect(status().isForbidden()); // then
@@ -422,8 +459,7 @@ public class ContatoControllerTest {
     void naoDeveCadastrarUmContatoComScopeIncorreto() throws Exception {
         // given
         ContatoRequest contatoRequest = new ContatoRequest(
-            "Jordi", "Zup", "thiago.cavalcante",
-            List.of(new TelefoneRequest("celular", "+5511999998888"))
+            "Jordi", "Zup", List.of(new TelefoneRequest("celular", "+5511999998888"))
         );
 
         String requestPayload = objectMapper.writeValueAsString(contatoRequest);
@@ -432,7 +468,10 @@ public class ContatoControllerTest {
             ContatoController.BASE_URI
         ).contentType(APPLICATION_JSON)
          .content(requestPayload)
-         .with(jwt().authorities(new SimpleGrantedAuthority("SCOPE_contatos:read")));
+         .with(
+             jwt().jwt(jwt -> jwt.claim("preferred_username", "thiago.cavalcante"))
+                  .authorities(new SimpleGrantedAuthority("SCOPE_contatos:read"))
+         );
 
         // when
         mockMvc.perform(requestBuilder).andExpect(status().isForbidden()); // then

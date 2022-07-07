@@ -17,9 +17,6 @@ public class ContatoRequest {
     @NotBlank
     private String empresa;
 
-    @NotBlank
-    private String criadoPor;
-
     @NotEmpty
     @Valid
     private List<TelefoneRequest> telefones;
@@ -27,16 +24,15 @@ public class ContatoRequest {
     public ContatoRequest() {}
 
     public ContatoRequest(@NotBlank String nome, @NotBlank String empresa,
-                          @NotBlank String criadoPor, @Valid List<TelefoneRequest> telefones) {
+                          @Valid List<TelefoneRequest> telefones) {
         this.nome = nome;
         this.empresa = empresa;
-        this.criadoPor = criadoPor;
         this.telefones = telefones;
     }
 
-    public Contato toModel() {
+    public Contato toModel(String username) {
         return new Contato(
-            nome, empresa, criadoPor,
+            nome, empresa, username,
             telefones.stream().map(TelefoneRequest::toModel).collect(Collectors.toList())
         );
     }
@@ -47,10 +43,6 @@ public class ContatoRequest {
 
     public String getEmpresa() {
         return empresa;
-    }
-
-    public String getCriadoPor() {
-        return criadoPor;
     }
 
     public List<TelefoneRequest> getTelefones() {

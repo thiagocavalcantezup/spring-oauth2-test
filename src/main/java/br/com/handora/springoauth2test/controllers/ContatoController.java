@@ -9,6 +9,8 @@ import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -59,8 +61,15 @@ public class ContatoController {
     @Transactional
     @PostMapping
     public ResponseEntity<?> create(@RequestBody @Valid ContatoRequest contatoRequest,
-                                    UriComponentsBuilder ucb) {
-        Contato contato = contatoRepository.save(contatoRequest.toModel());
+                                    UriComponentsBuilder ucb,
+                                    @AuthenticationPrincipal Jwt principal) {
+
+        String username = principal.getClaim("preferred_username");
+        if (username == null) {
+            username = "anonymous";
+        }
+
+        Contato contato = contatoRepository.save(contatoRequest.toModel(username));
 
         URI location = ucb.path(BASE_URI + "/{id}").buildAndExpand(contato.getId()).toUri();
 
